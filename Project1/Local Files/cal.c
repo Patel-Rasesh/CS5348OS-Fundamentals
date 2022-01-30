@@ -1,10 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "quadratic.c"
-#include "triples.c"
-#include "sum.c"
-//#include "Makefile"
+#include "INIT.H"
 #define MAX_LINE_LENGTH 80
 int main (int argc, char **argv) {
    char *inputFile = argv[1];
@@ -36,7 +33,7 @@ int main (int argc, char **argv) {
        int op2 = strtol(operand2, &supp_ptr, 10);
        supp_ptr = NULL;
        if(strcmp(command, "quadratic") == 0){
-           printf("Entered in quadractic");
+           printf("Entered in quadratic");
            solve_quadratic(op1, op2);
            printf("\n");
        }
