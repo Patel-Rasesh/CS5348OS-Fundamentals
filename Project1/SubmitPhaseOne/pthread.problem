@@ -1,0 +1,58 @@
+Threads use a shared space of resources. Implying - memory location 
+of counter (from the code) should be shared by both of the threads.
+Counter is being used inside the thread function but it is not thread safe* 
+(rethink on this)
+
+The problem we are observing is that the value of counter is being 
+calculated incorrectly. This is because thread switch is atomic at 
+an instructional level and one line of code - "counter++" is actully 
+three instructions at a machine level.
+
+Let me explain - 
+1. OS allows thread switch to happen only at after the execution 
+of an instruction
+2. Since the code counter++ is a combination of read, add, and 
+write, a thread switch can happen even before counter++ can be 
+executed successfully for any one thread
+3. Owing to this, when we store the sum of counter (previous value 
+of counter + 1) to one of the thread, it overwrites the value written 
+by other threads
+4. Hence we are getting incorrect answer to the counter 
+5. Moreover, when a thread switch is happening before the execution 
+of a code inside the thread function, number of thread switch would 
+be unpredictable based on the OS's configuration
+
+Example using two threads - 
+
+Part 1 -
+counter = 0 (initialization)
+Counter++ command can be broken down in these instruction
+    MOV REF, *counter
+    ADD counter, 1
+    MOVE $counter, REF
+
+T1 : load counter           // Read value from counter's memory 
+                            // location to accumulator
+T1 : add ACC, 1             // Increment 1 to accumulator
+T1 : store counter, ACC     // Write accumulator back to the memory 
+                            // location of counter
+
+This is the ideal execution of counter++
+But since a thread switch is atomic to instructional level, it can 
+happen between these three instructions too
+
+Part 2 -
+The value of counter is 32 before the execution of T1
+T1 : load counter           // Counter = 32
+T1 : add ACC, 1             // Accumulator = 33
+Switch out T1. Switch in T2
+T2 : load counter           // Counter = 32
+T1 : store counter, ACC     // Counter = 33
+T2 : add ACC, 1             // Accumulator = 33
+T2 : store counter, ACC     // Counter = 33
+
+Note - Threads may share resources but it has its own accumulator register
+The issue we are trying to demonstrate here is that even after 
+the execution of 2 threads - namely T1 and T2, because of the premature thread 
+switch, we have incremented the value of counter only by 1, where we should
+be incrementing the value of counter by 2 (because of two threads)
